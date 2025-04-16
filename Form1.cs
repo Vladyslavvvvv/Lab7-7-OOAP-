@@ -5,8 +5,10 @@ namespace Lab7_OOAP_
 {
     public partial class Form1 : Form
     {
+        // Поле для зберігання першого елемента ланцюга обробки
         private IHandler _chain;
 
+        // Елементи інтерфейсу
         private TextBox txtTask;
         private ComboBox cmbTaskType;
         private Button btnAddTask;
@@ -16,33 +18,37 @@ namespace Lab7_OOAP_
 
         public Form1()
         {
-            InitializeComponent();
-            InitializeCustomUI();
-            InitializeChain();
+            InitializeComponent(); 
+            InitializeCustomUI();        
+            InitializeChain();            
         }
 
         private void InitializeChain()
         {
+            // Створюємо обробників
             var editor = new EditorHandler(lstOutput);
             var layout = new LayoutHandler(lstOutput);
             var designer = new DesignerHandler(lstOutput);
 
+            // Формуємо ланцюг: редактор → макетувальник → дизайнер
             editor.SetNext(layout).SetNext(designer);
             _chain = editor;
 
+            // Додаємо типи задач до комбобокса
             cmbTaskType.Items.AddRange(new[] { "Редагування", "Макетування", "Дизайн" });
-            cmbTaskType.SelectedIndex = 0;
+            cmbTaskType.SelectedIndex = 0; // Встановлюємо значення за замовчуванням
         }
 
+        // Обробка кліку на кнопку "Додати задачу"
         private void btnAddTask_Click(object sender, EventArgs e)
         {
-            var taskType = cmbTaskType.SelectedItem.ToString();
-            var taskDescription = txtTask.Text.Trim();
+            var taskType = cmbTaskType.SelectedItem.ToString();   // Отримуємо тип задачі
+            var taskDescription = txtTask.Text.Trim();            // Отримуємо опис задачі
 
             if (!string.IsNullOrWhiteSpace(taskDescription))
             {
-                _chain.Handle(taskType, taskDescription);
-                txtTask.Clear();
+                _chain.Handle(taskType, taskDescription); // Запускаємо обробку задачі через ланцюг
+                txtTask.Clear();                          // Очищаємо поле вводу
             }
             else
             {
@@ -62,7 +68,7 @@ namespace Lab7_OOAP_
             cmbTaskType = new ComboBox() { Left = 130, Top = 60, Width = 200 };
 
             btnAddTask = new Button() { Text = "Додати задачу", Left = 350, Top = 60, Width = 180 };
-            btnAddTask.Click += new EventHandler(btnAddTask_Click);
+            btnAddTask.Click += new EventHandler(btnAddTask_Click); // Прив’язка події натискання
 
             lstOutput = new ListBox() { Left = 20, Top = 110, Width = 530, Height = 200 };
 
@@ -75,28 +81,31 @@ namespace Lab7_OOAP_
         }
     }
 
+    // Інтерфейс обробника: визначає загальні методи
     public interface IHandler
     {
-        IHandler SetNext(IHandler handler);
-        void Handle(string taskType, string taskDescription);
+        IHandler SetNext(IHandler handler);                           // Встановлення наступного обробника
+        void Handle(string taskType, string taskDescription);         // Метод обробки задачі
     }
 
+    // Абстрактний базовий клас, реалізує логіку передавання далі
     public abstract class Handler : IHandler
     {
-        private IHandler _nextHandler;
+        private IHandler _nextHandler; // Посилання на наступного обробника
 
         public IHandler SetNext(IHandler handler)
         {
-            _nextHandler = handler;
+            _nextHandler = handler; // Зв’язування наступного обробника
             return handler;
         }
 
         public virtual void Handle(string taskType, string taskDescription)
         {
-            _nextHandler?.Handle(taskType, taskDescription);
+            _nextHandler?.Handle(taskType, taskDescription); // Якщо поточний не обробляє — передає далі
         }
     }
 
+    // Конкретний обробник: редактор
     public class EditorHandler : Handler
     {
         private readonly ListBox _output;
@@ -108,10 +117,11 @@ namespace Lab7_OOAP_
             if (taskType == "Редагування")
                 _output.Items.Add($"Редактор обробив задачу: {taskDescription}");
             else
-                base.Handle(taskType, taskDescription);
+                base.Handle(taskType, taskDescription); // Якщо не його — передає далі
         }
     }
 
+    // Конкретний обробник: макетувальник
     public class LayoutHandler : Handler
     {
         private readonly ListBox _output;
@@ -127,6 +137,7 @@ namespace Lab7_OOAP_
         }
     }
 
+    // Конкретний обробник: дизайнер
     public class DesignerHandler : Handler
     {
         private readonly ListBox _output;
@@ -138,7 +149,7 @@ namespace Lab7_OOAP_
             if (taskType == "Дизайн")
                 _output.Items.Add($"Дизайнер обробив задачу: {taskDescription}");
             else
-                _output.Items.Add($"Немає обробника для задачі: {taskDescription}");
+                _output.Items.Add($"Немає обробника для задачі: {taskDescription}"); // Якщо ніхто не зміг обробити
         }
     }
 }
